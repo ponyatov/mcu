@@ -10,17 +10,17 @@ CLOOG_VER		= 0.18.1
 CWD    = $(CURDIR)
 MODULE = $(notdir $(CURDIR))
 
-.PHONY: cross all clean dirs gz cclibs gcc
+.PHONY: cross all clean dirs gz cclibs binutils gcc
 
-cross: dirs
-	echo $(MODULE) @ $(CWD)
+cross: dirs gz
 	
-TMP ?= $(CWD)/tmp
-SRC ?= $(CWD)/src
-GZ  ?= $(HOME)/gz
+TMP   ?= $(CWD)/tmp
+SRC   ?= $(TMP)/src
+GZ    ?= $(HOME)/gz
+CROSS ?= $(CWD)/cross
 
 dirs:
-	mkdir -p $(TMP) $(SRC) $(GZ)
+	mkdir -p $(TMP) $(SRC) $(GZ) $(CROSS)
 
 BINUTILS		= binutils-$(BINUTILS_VER)
 GCC				= gcc-$(GCC_VER)
@@ -60,3 +60,21 @@ $(GZ)/$(ISL_GZ):
 	$(WGET) ftp://gcc.gnu.org/pub/gcc/infrastructure/$(ISL_GZ)
 $(GZ)/$(CLOOG_GZ):
 	$(WGET) ftp://gcc.gnu.org/pub/gcc/infrastructure/$(CLOOG_GZ)
+
+cclibs: gmp mpfr mpc isl cloog
+
+CFG = configure --prefix=$(CROSS)
+
+CORENUM = $(shell grep processor /proc/cpuinfo|wc -l)
+
+CFG_CCLIBS = --disable-shared
+
+CFG_GMP    = $(CFG_CCLIBS)
+
+gmp: $(CROSS)/lib/libgmp.a
+$(CROSS)/lib/libgmp.a: $(SRC)/$(GMP)/README
+	rm -rf $(TMP)/$(GMP) ; mkdir $(TMP)/$(GMP) ; cd $(TMP)/$(GMP) ; \
+	$(SRC)/$(GMP)/$(CFG) $(CFG_GMP) && make -j$(CORENUM) && make install
+
+$(SRC)/%/README: $(GZ)/%.tar.bz2
+	cd $(SRC) ; bzcat $< | tar x
