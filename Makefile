@@ -75,6 +75,25 @@ gmp: $(CROSS)/lib/libgmp.a
 $(CROSS)/lib/libgmp.a: $(SRC)/$(GMP)/README
 	rm -rf $(TMP)/$(GMP) ; mkdir $(TMP)/$(GMP) ; cd $(TMP)/$(GMP) ; \
 	$(SRC)/$(GMP)/$(CFG) $(CFG_GMP) && make -j$(CORENUM) && make install
+	
+CFG_MPFR   = $(CFG_CCLIBS) --with-gmp=$(CROSS)
+
+mpfr: $(CROSS)/lib/libmpfr.a
+$(CROSS)/lib/libmpfr.a: $(SRC)/$(MPFR)/README
+	rm -rf $(TMP)/$(MPFR) ; mkdir $(TMP)/$(MPFR) ; cd $(TMP)/$(MPFR) ; \
+	$(SRC)/$(MPFR)/$(CFG) $(CFG_MPFR) && make -j$(CORENUM) && make install
+
+CFG_MPC    = $(CFG_CCLIBS) --with-gmp=$(CROSS)
+
+mpc: $(CROSS)/lib/libmpc.a
+$(CROSS)/lib/libmpc.a: $(SRC)/$(MPC)/README
+	rm -rf $(TMP)/$(MPC) ; mkdir $(TMP)/$(MPC) ; cd $(TMP)/$(MPC) ; \
+	$(SRC)/$(MPC)/$(CFG) $(CFG_MPC) && make -j$(CORENUM) && make install
 
 $(SRC)/%/README: $(GZ)/%.tar.bz2
 	cd $(SRC) ; bzcat $< | tar x
+$(SRC)/%/README: $(GZ)/%.tar.xz
+	cd $(SRC) ; xzcat $< | tar x
+$(SRC)/%/README: $(GZ)/%.tar.gz
+	cd $(SRC) ;  zcat $< | tar x
+	
