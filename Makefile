@@ -22,21 +22,21 @@ CROSS ?= $(CWD)/cross
 dirs:
 	mkdir -p $(TMP) $(SRC) $(GZ) $(CROSS)
 
-BINUTILS		= binutils-$(BINUTILS_VER)
-GCC				= gcc-$(GCC_VER)
-GMP				= gmp-$(GMP_VER)
-MPFR			= mpfr-$(MPFR_VER)
-MPC				= mpc-$(MPC_VER)
-ISL				= isl-$(ISL_VER)
-CLOOG			= cloog-$(CLOOG_VER)
+BINUTILS	= binutils-$(BINUTILS_VER)
+GCC			= gcc-$(GCC_VER)
+GMP			= gmp-$(GMP_VER)
+MPFR		= mpfr-$(MPFR_VER)
+MPC			= mpc-$(MPC_VER)
+ISL			= isl-$(ISL_VER)
+CLOOG		= cloog-$(CLOOG_VER)
 
-BINUTILS_GZ		= $(BINUTILS).tar.xz
-GCC_GZ			= $(GCC).tar.xz
-GMP_GZ			= $(GMP).tar.xz
-MPFR_GZ			= $(MPFR).tar.xz
-MPC_GZ			= $(MPC).tar.gz
-ISL_GZ			= $(ISL).tar.bz2
-CLOOG_GZ		= $(CLOOG).tar.gz
+BINUTILS_GZ	= $(BINUTILS).tar.xz
+GCC_GZ		= $(GCC).tar.xz
+GMP_GZ		= $(GMP).tar.xz
+MPFR_GZ		= $(MPFR).tar.xz
+MPC_GZ		= $(MPC).tar.gz
+ISL_GZ		= $(ISL).tar.bz2
+CLOOG_GZ	= $(CLOOG).tar.gz
 
 gz: $(GZ)/$(BINUTILS_GZ) $(GZ)/$(GCC_GZ) \
 	$(GZ)/$(GMP_GZ) $(GZ)/$(MPFR_GZ) $(GZ)/$(MPC_GZ) \
@@ -67,33 +67,47 @@ CFG = configure --prefix=$(CROSS)
 
 CORENUM = $(shell grep processor /proc/cpuinfo|wc -l)
 
-CFG_CCLIBS = --disable-shared
+CFG_CCLIBS	= --disable-shared
 
-CFG_GMP    = $(CFG_CCLIBS)
+CFG_GMP		= $(CFG_CCLIBS)
 
 gmp: $(CROSS)/lib/libgmp.a
 $(CROSS)/lib/libgmp.a: $(SRC)/$(GMP)/README
 	rm -rf $(TMP)/$(GMP) ; mkdir $(TMP)/$(GMP) ; cd $(TMP)/$(GMP) ; \
 	$(SRC)/$(GMP)/$(CFG) $(CFG_GMP) && make -j$(CORENUM) && make install
 	
-CFG_MPFR   = $(CFG_CCLIBS) --with-gmp=$(CROSS)
+CFG_MPFR	= $(CFG_CCLIBS) --with-gmp=$(CROSS)
 
 mpfr: $(CROSS)/lib/libmpfr.a
 $(CROSS)/lib/libmpfr.a: $(SRC)/$(MPFR)/README
 	rm -rf $(TMP)/$(MPFR) ; mkdir $(TMP)/$(MPFR) ; cd $(TMP)/$(MPFR) ; \
 	$(SRC)/$(MPFR)/$(CFG) $(CFG_MPFR) && make -j$(CORENUM) && make install
 
-CFG_MPC    = $(CFG_CCLIBS) --with-gmp=$(CROSS)
+CFG_MPC		= $(CFG_CCLIBS) --with-gmp=$(CROSS)
 
 mpc: $(CROSS)/lib/libmpc.a
 $(CROSS)/lib/libmpc.a: $(SRC)/$(MPC)/README
 	rm -rf $(TMP)/$(MPC) ; mkdir $(TMP)/$(MPC) ; cd $(TMP)/$(MPC) ; \
 	$(SRC)/$(MPC)/$(CFG) $(CFG_MPC) && make -j$(CORENUM) && make install
 
+CFG_ISL		= $(CFG_CCLIBS) --with-gmp-prefix=$(CROSS)
+
+isl: $(CROSS)/lib/libisl.a
+$(CROSS)/lib/libisl.a: $(SRC)/$(ISL)/README
+	rm -rf $(TMP)/$(ISL) ; mkdir $(TMP)/$(ISL) ; cd $(TMP)/$(ISL) ; \
+	$(SRC)/$(ISL)/$(CFG) $(CFG_ISL) && make -j$(CORENUM) && make install
+
+CFG_CLOOG	= $(CFG_CCLIBS) --with-gmp-prefix=$(CROSS)
+
+cloog: $(CROSS)/lib/libcloog-isl.a
+$(CROSS)/lib/libcloog-isl.a: $(SRC)/$(CLOOG)/README
+	rm -rf $(TMP)/$(CLOOG) ; mkdir $(TMP)/$(CLOOG) ; cd $(TMP)/$(CLOOG) ; \
+	$(SRC)/$(CLOOG)/$(CFG) $(CFG_CLOOG) && make -j$(CORENUM) && make install
+
 $(SRC)/%/README: $(GZ)/%.tar.bz2
-	cd $(SRC) ; bzcat $< | tar x
+	cd $(SRC) ; bzcat $< | tar x && touch $@
 $(SRC)/%/README: $(GZ)/%.tar.xz
-	cd $(SRC) ; xzcat $< | tar x
+	cd $(SRC) ; xzcat $< | tar x && touch $@
 $(SRC)/%/README: $(GZ)/%.tar.gz
-	cd $(SRC) ;  zcat $< | tar x
+	cd $(SRC) ;  zcat $< | tar x && touch $@
 	
