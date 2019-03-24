@@ -1,4 +1,6 @@
 
+TARGET ?= arm-none-eabi
+
 BINUTILS_VER	= 2.32
 GCC_VER			= 8.3.0
 GMP_VER			= 6.1.2
@@ -14,13 +16,14 @@ MODULE = $(notdir $(CURDIR))
 
 cross: dirs gz
 	
-TMP   ?= $(CWD)/tmp
-SRC   ?= $(TMP)/src
-GZ    ?= $(HOME)/gz
-CROSS ?= $(CWD)/cross
+TMP		?= $(CWD)/tmp
+SRC		?= $(TMP)/src
+GZ		?= $(HOME)/gz
+CROSS	?= $(CWD)/cross
+SYSROOT	?= $(CROSS)/sysroot
 
 dirs:
-	mkdir -p $(TMP) $(SRC) $(GZ) $(CROSS)
+	mkdir -p $(TMP) $(SRC) $(GZ) $(CROSS) $(SYSROOT)
 
 BINUTILS	= binutils-$(BINUTILS_VER)
 GCC			= gcc-$(GCC_VER)
@@ -111,3 +114,14 @@ $(SRC)/%/README: $(GZ)/%.tar.xz
 $(SRC)/%/README: $(GZ)/%.tar.gz
 	cd $(SRC) ;  zcat $< | tar x && touch $@
 	
+CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS)
+#					--with-isl=$(CROSS) --with-cloog=$(CROSS)
+
+CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) \
+	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
+	$(CFG_WITHCCLIBS)
+
+binutils: $(CROSS)/bin/$(TARGET)-ld
+$(CROSS)/bin/$(TARGET)-ld: $(SRC)/$(BINUTILS)/README
+	rm -rf $(TMP)/$(BINUTILS) ; mkdir $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ; \
+	$(SRC)/$(BINUTILS)/$(CFG) $(CFG_BINUTILS) && make -j$(CORENUM) && make install
