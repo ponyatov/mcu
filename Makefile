@@ -119,6 +119,7 @@ CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS)
 
 CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) \
 	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
+	--enable-lto --disable-multilib \
 	$(CFG_WITHCCLIBS)
 
 binutils: $(CROSS)/bin/$(TARGET)-ld
