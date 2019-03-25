@@ -6,7 +6,8 @@ GCC_VER			= 8.3.0
 GMP_VER			= 6.1.2
 MPFR_VER		= 4.0.2
 MPC_VER			= 1.1.0
-ISL_VER			= 0.18
+ISL_VER			= 0.16.1
+# 0.18 not detected by binutils
 CLOOG_VER		= 0.18.1
 
 CWD    = $(CURDIR)
@@ -14,7 +15,7 @@ MODULE = $(notdir $(CURDIR))
 
 .PHONY: cross all clean dirs gz cclibs binutils gcc
 
-cross: dirs gz
+cross: dirs gz cclibs binutils
 	
 TMP		?= $(CWD)/tmp
 SRC		?= $(TMP)/src
@@ -115,7 +116,7 @@ $(SRC)/%/README: $(GZ)/%.tar.gz
 	cd $(SRC) ;  zcat $< | tar x && touch $@
 	
 CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS)
-#					--with-isl=$(CROSS) --with-cloog=$(CROSS)
+					--with-isl=$(CROSS) --with-cloog=$(CROSS)
 
 CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) \
 	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
