@@ -135,3 +135,15 @@ $(CROSS)/bin/$(TARGET)-gcc: $(SRC)/$(GCC)/README
 	rm -rf $(TMP)/$(GCC) ; mkdir $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ; \
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
 #	 && make -j$(CORENUM) && make install
+
+.PHONY: target arm-none-eabi msp430-elf
+target: $(TARGET)
+
+MSP430_FILES_VER = 1.206
+MSP430_FILES_GZ  = msp430-gcc-support-files-$(MSP430_FILES_VER).zip
+
+msp430-elf: $(GZ)/$(MSP430_FILES_GZ)
+	cd $(TMP) ; unzip -x $< && \
+	mv msp430-gcc-support-files/include $(SYSROOT)/
+$(GZ)/$(MSP430_FILES_GZ):
+	$(WGET) http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/exports/$(MSP430_FILES_GZ)
