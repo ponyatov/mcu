@@ -21,9 +21,9 @@ NEWLIB_VER		= nano-2.1
 CWD    = $(CURDIR)
 MODULE = $(notdir $(CURDIR))
 
-.PHONY: cross all clean dirs gz cclibs binutils gcc0
+.PHONY: cross all clean dirs gz cclibs binutils gcc0 newlib gcc
 
-cross: dirs gz cclibs binutils gcc0
+cross: dirs gz cclibs binutils gcc0 newlib gcc
 	
 TMP		?= $(CWD)/tmp
 SRC		?= $(TMP)/src
@@ -150,8 +150,12 @@ gcc0: $(SRC)/$(GCC)/README
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
 	cd $(TMP)/$(GCC) ; make -j2 all-host ; make install-host
 	
-CFG_NEWLIB = --target=$(TARGET) $(CFG_CPU) --with-sysroot=$(SYSROOT) \
-				--disable-newlib-supplied-syscalls
+gcc: $(CROSS)/$(TARGET)/lib/libc.a
+	cd $(TMP)/$(GCC) ; make -j2 all-target ; make install-target
+	
+CFG_NEWLIB = --prefix=$(CROSS) --target=$(TARGET) $(CFG_CPU) \
+				--disable-newlib-supplied-syscalls \
+				--infodir=$(CROSS)/share/info
 
 #--enable-newlib-reent-small --disable-newlib-fvwrite-in-streamio 
 #--disable-newlib-fseek-optimization --disable-newlib-wide-orient 
@@ -159,7 +163,8 @@ CFG_NEWLIB = --target=$(TARGET) $(CFG_CPU) --with-sysroot=$(SYSROOT) \
 #--enable-lite-exit --enable-newlib-global-atexit 
 #--enable-newlib-nano-formatted-io
 	
-newlib: $(SRC)/$(NEWLIB)/README
+newlib: $(CROSS)/$(TARGET)/lib/libc.a
+$(CROSS)/$(TARGET)/lib/libc.a: $(SRC)/$(NEWLIB)/README
 	rm -rf $(TMP)/$(NEWLIB) ; mkdir $(TMP)/$(NEWLIB) ; cd $(TMP)/$(NEWLIB) ; \
 	$(XPATH) $(SRC)/$(NEWLIB)/$(CFG) $(CFG_NEWLIB) && \
 	$(MAKEJ) && $(MAKE) install
