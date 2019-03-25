@@ -1,6 +1,12 @@
 
-TARGET ?= arm-none-eabi
-# TARGET ?= msp430-elf
+TARGET  = arm-none-eabi
+
+# STM32F0/L0 series
+CFG_CPU = --with-cpu=cortex-m0 --with-float=soft \
+			--with-mode=thumb --disable-interwork
+
+# MSP430
+# TARGET = msp430-elf
 
 BINUTILS_VER	= 2.32
 GCC_VER			= 8.3.0
@@ -13,9 +19,9 @@ CLOOG_VER		= 0.18.1
 CWD    = $(CURDIR)
 MODULE = $(notdir $(CURDIR))
 
-.PHONY: cross all clean dirs gz cclibs binutils gcc
+.PHONY: cross all clean dirs gz cclibs binutils gcc0
 
-cross: dirs gz cclibs binutils
+cross: dirs gz cclibs binutils gcc0
 	
 TMP		?= $(CWD)/tmp
 SRC		?= $(TMP)/src
@@ -115,10 +121,10 @@ $(SRC)/%/README: $(GZ)/%.tar.xz
 $(SRC)/%/README: $(GZ)/%.tar.gz
 	cd $(SRC) ;  zcat $< | tar x && touch $@
 	
-CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS)
+CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS) \
 					--with-isl=$(CROSS) --with-cloog=$(CROSS)
 
-CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) \
+CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) $(CFG_CPU) \
 	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
 	--enable-lto --disable-multilib \
 	$(CFG_WITHCCLIBS)
@@ -130,11 +136,10 @@ $(CROSS)/bin/$(TARGET)-ld: $(SRC)/$(BINUTILS)/README
 
 CFG_GCC = $(CFG_BINUTILS) --with-newlib --enable-languages="c"
 
-gcc: $(CROSS)/bin/$(TARGET)-gcc
-$(CROSS)/bin/$(TARGET)-gcc: $(SRC)/$(GCC)/README
+gcc0: $(SRC)/$(GCC)/README
 	rm -rf $(TMP)/$(GCC) ; mkdir $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ; \
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
-#	 && make -j$(CORENUM) && make install
+	cd $(TMP)/$(GCC) ; make -j2 all-host ; make install-host
 
 .PHONY: target arm-none-eabi msp430-elf
 target: $(TARGET)
