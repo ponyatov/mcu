@@ -145,5 +145,6 @@ MSP430_FILES_GZ  = msp430-gcc-support-files-$(MSP430_FILES_VER).zip
 msp430-elf: $(GZ)/$(MSP430_FILES_GZ)
 	cd $(TMP) ; unzip -x $< && \
 	mv msp430-gcc-support-files/include $(SYSROOT)/
+	mkdir -p $(CROSS)/doc ; $(WGET) -P $(CROSS)/doc http://www.ti.com/lit/ug/slau646c/slau646c.pdf
 $(GZ)/$(MSP430_FILES_GZ):
 	$(WGET) http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/exports/$(MSP430_FILES_GZ)
