@@ -157,7 +157,7 @@ gcc0: $(SRC)/$(GCC)/README
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
 	cd $(TMP)/$(GCC) ; $(MAKE) -j2 all-host   ; $(MAKE) install-host
 
-gcc: $(CROSS)/$(TARGET)/lib/libc.a
+gcc: $(SYSROOT)/lib/libc.a
 	cd $(TMP)/$(GCC) ; $(MAKE) -j2 all-target ; $(MAKE) install-target
 	
 CFG_NEWLIB = $(CFG_BINUTILS) --prefix=$(SYSROOT) \
@@ -184,6 +184,21 @@ $(SRC)/$(NEWLIB)/README:
 .PHONY: target arm-none-eabi msp430-elf
 target: $(TARGET)
 
+STLINK_VER  = 1.5.1
+STLINK		= stlink-$(STLINK_VER)
+STLINK_GZ   = $(STLINK_VER).tar.gz
+
+arm-none-eabi: $(CROSS)/bin/st-util
+
+CFG_STLINK	= -DCMAKE_INSTALL_PREFIX="$(CROSS)"
+
+$(CROSS)/bin/st-util: $(SRC)/$(STLINK)/README
+	rm -rf $(TMP)/$(STLINK) ; mkdir $(TMP)/$(STLINK) ; cd $(TMP)/$(STLINK) ; \
+	cmake $(CFG_STLINK) $(SRC)/$(STLINK) && $(MAKEJ) && sudo $(MAKE) install
+	
+$(GZ)/stlink-$(STLINK_GZ):
+	$(WGET) -O $@ https://github.com/texane/stlink/archive/v$(STLINK_GZ)
+
 MSP430_FILES_VER = 1.206
 MSP430_FILES_GZ  = msp430-gcc-support-files-$(MSP430_FILES_VER).zip
 
@@ -193,3 +208,13 @@ msp430-elf: $(GZ)/$(MSP430_FILES_GZ)
 	mkdir -p $(CROSS)/doc ; $(WGET) -P $(CROSS)/doc http://www.ti.com/lit/ug/slau646c/slau646c.pdf
 $(GZ)/$(MSP430_FILES_GZ):
 	$(WGET) http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/exports/$(MSP430_FILES_GZ)
+
+
+MCU_CC = $(XPATH) $(TARGET)-gcc --specs=nosys.specs
+MCU_OD = $(XPATH) $(TARGET)-objdump
+MCU_CFLAGS = -mthumb -mcpu=cortex-m3
+.PHONY: test
+test: none.elf
+	rm $<
+%.elf: test/%.c
+	$(MCU_CC) $(MCU_CFLAGS) -o $@ $< && $(MCU_OD) -x $@
