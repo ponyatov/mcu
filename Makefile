@@ -16,6 +16,8 @@ MPC_VER			= 1.1.0
 ISL_VER			= 0.18
 CLOOG_VER		= 0.18.1
 
+NEWLIB_VER		= nano-2.1
+
 CWD    = $(CURDIR)
 MODULE = $(notdir $(CURDIR))
 
@@ -39,6 +41,8 @@ MPFR		= mpfr-$(MPFR_VER)
 MPC			= mpc-$(MPC_VER)
 ISL			= isl-$(ISL_VER)
 CLOOG		= cloog-$(CLOOG_VER)
+
+NEWLIB		= newlib-$(NEWLIB_VER)
 
 BINUTILS_GZ	= $(BINUTILS).tar.xz
 GCC_GZ		= $(GCC).tar.xz
@@ -73,9 +77,14 @@ $(GZ)/$(CLOOG_GZ):
 
 cclibs: gmp mpfr mpc cloog isl
 
-CFG = configure --prefix=$(CROSS)
+XPATH = PATH=$(CROSS)/bin:$(PATH)
+
+CFG = configure --disable-nls --prefix=$(CROSS)
 
 CORENUM = $(shell grep processor /proc/cpuinfo|wc -l)
+
+MAKE	= $(XPATH) make
+MAKEJ	= $(MAKE) -j$(CORENUM)
 
 CFG_CCLIBS	= --disable-shared
 
@@ -124,7 +133,7 @@ $(SRC)/%/README: $(GZ)/%.tar.gz
 CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS) \
 					--with-isl=$(CROSS) --with-cloog=$(CROSS)
 
-CFG_BINUTILS = --disable-nls --prefix=$(CROSS) --target=$(TARGET) $(CFG_CPU) \
+CFG_BINUTILS = --target=$(TARGET) $(CFG_CPU) \
 	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
 	--enable-lto --disable-multilib \
 	$(CFG_WITHCCLIBS)
@@ -140,6 +149,24 @@ gcc0: $(SRC)/$(GCC)/README
 	rm -rf $(TMP)/$(GCC) ; mkdir $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ; \
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
 	cd $(TMP)/$(GCC) ; make -j2 all-host ; make install-host
+	
+CFG_NEWLIB = --target=$(TARGET) $(CFG_CPU) --with-sysroot=$(SYSROOT) \
+				--disable-newlib-supplied-syscalls
+
+#--enable-newlib-reent-small --disable-newlib-fvwrite-in-streamio 
+#--disable-newlib-fseek-optimization --disable-newlib-wide-orient 
+#--enable-newlib-nano-malloc --disable-newlib-unbuf-stream-opt 
+#--enable-lite-exit --enable-newlib-global-atexit 
+#--enable-newlib-nano-formatted-io
+	
+newlib: $(SRC)/$(NEWLIB)/README
+	rm -rf $(TMP)/$(NEWLIB) ; mkdir $(TMP)/$(NEWLIB) ; cd $(TMP)/$(NEWLIB) ; \
+	$(XPATH) $(SRC)/$(NEWLIB)/$(CFG) $(CFG_NEWLIB) && \
+	$(MAKEJ) && $(MAKE) install
+	
+$(SRC)/$(NEWLIB)/README:
+	cd $(SRC) ; git clone --depth=1 https://github.com/iperry/$(NEWLIB).git
+#	cd $(SRC) ; git clone https://keithp.com/cgit/newlib.git
 
 .PHONY: target arm-none-eabi msp430-elf
 target: $(TARGET)
