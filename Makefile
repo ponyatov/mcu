@@ -1,13 +1,13 @@
 
 TARGET ?= arm-none-eabi
+# TARGET ?= msp430-elf
 
 BINUTILS_VER	= 2.32
 GCC_VER			= 8.3.0
 GMP_VER			= 6.1.2
 MPFR_VER		= 4.0.2
 MPC_VER			= 1.1.0
-ISL_VER			= 0.16.1
-# 0.18 not detected by binutils
+ISL_VER			= 0.18
 CLOOG_VER		= 0.18.1
 
 CWD    = $(CURDIR)
@@ -65,7 +65,7 @@ $(GZ)/$(ISL_GZ):
 $(GZ)/$(CLOOG_GZ):
 	$(WGET) ftp://gcc.gnu.org/pub/gcc/infrastructure/$(CLOOG_GZ)
 
-cclibs: gmp mpfr mpc isl cloog
+cclibs: gmp mpfr mpc cloog isl
 
 CFG = configure --prefix=$(CROSS)
 
@@ -94,19 +94,19 @@ $(CROSS)/lib/libmpc.a: $(SRC)/$(MPC)/README
 	rm -rf $(TMP)/$(MPC) ; mkdir $(TMP)/$(MPC) ; cd $(TMP)/$(MPC) ; \
 	$(SRC)/$(MPC)/$(CFG) $(CFG_MPC) && make -j$(CORENUM) && make install
 
-CFG_ISL		= $(CFG_CCLIBS) --with-gmp-prefix=$(CROSS)
-
-isl: $(CROSS)/lib/libisl.a
-$(CROSS)/lib/libisl.a: $(SRC)/$(ISL)/README
-	rm -rf $(TMP)/$(ISL) ; mkdir $(TMP)/$(ISL) ; cd $(TMP)/$(ISL) ; \
-	$(SRC)/$(ISL)/$(CFG) $(CFG_ISL) && make -j$(CORENUM) && make install
-
 CFG_CLOOG	= $(CFG_CCLIBS) --with-gmp-prefix=$(CROSS)
 
 cloog: $(CROSS)/lib/libcloog-isl.a
 $(CROSS)/lib/libcloog-isl.a: $(SRC)/$(CLOOG)/README
 	rm -rf $(TMP)/$(CLOOG) ; mkdir $(TMP)/$(CLOOG) ; cd $(TMP)/$(CLOOG) ; \
 	$(SRC)/$(CLOOG)/$(CFG) $(CFG_CLOOG) && make -j$(CORENUM) && make install
+
+CFG_ISL		= $(CFG_CCLIBS) --with-gmp-prefix=$(CROSS)
+
+isl: $(CROSS)/lib/libisl.a
+$(CROSS)/lib/libisl.a: $(SRC)/$(ISL)/README
+	rm -rf $(TMP)/$(ISL) ; mkdir $(TMP)/$(ISL) ; cd $(TMP)/$(ISL) ; \
+	$(SRC)/$(ISL)/$(CFG) $(CFG_ISL) && make -j$(CORENUM) && make install
 
 $(SRC)/%/README: $(GZ)/%.tar.bz2
 	cd $(SRC) ; bzcat $< | tar x && touch $@
