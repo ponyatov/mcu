@@ -218,3 +218,9 @@ test: none.elf
 	rm $<
 %.elf: test/%.c
 	$(MCU_CC) $(MCU_CFLAGS) -o $@ $< && $(MCU_OD) -x $@
+
+.PHONY: push
+push:
+	git push -v
+	cd .. ; git push -v
+	
