@@ -20,7 +20,7 @@ cross: dirs gz cclibs binutils
 TMP		?= $(CWD)/tmp
 SRC		?= $(TMP)/src
 GZ		?= $(HOME)/gz
-CROSS	?= $(CWD)/cross
+CROSS	?= $(CWD)/$(TARGET)
 SYSROOT	?= $(CROSS)/sysroot
 
 dirs:
@@ -127,3 +127,11 @@ binutils: $(CROSS)/bin/$(TARGET)-ld
 $(CROSS)/bin/$(TARGET)-ld: $(SRC)/$(BINUTILS)/README
 	rm -rf $(TMP)/$(BINUTILS) ; mkdir $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ; \
 	$(SRC)/$(BINUTILS)/$(CFG) $(CFG_BINUTILS) && make -j$(CORENUM) && make install
+
+CFG_GCC = $(CFG_BINUTILS) --with-newlib --enable-languages="c"
+
+gcc: $(CROSS)/bin/$(TARGET)-gcc
+$(CROSS)/bin/$(TARGET)-gcc: $(SRC)/$(GCC)/README
+	rm -rf $(TMP)/$(GCC) ; mkdir $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ; \
+	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
+#	 && make -j$(CORENUM) && make install
