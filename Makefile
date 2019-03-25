@@ -7,6 +7,7 @@ CFG_CPU = --with-cpu=cortex-m0 --with-float=soft \
 
 # MSP430
 # TARGET = msp430-elf
+# CFG_CPU = --with-cpu=msp430g2554
 
 BINUTILS_VER	= 2.32
 GCC_VER			= 8.3.0
@@ -14,6 +15,8 @@ GMP_VER			= 6.1.2
 MPFR_VER		= 4.0.2
 MPC_VER			= 1.1.0
 ISL_VER			= 0.18
+# 0.12.2
+# 0.18 undetected by newlib
 CLOOG_VER		= 0.18.1
 
 NEWLIB_VER		= nano-2.1
@@ -24,7 +27,7 @@ MODULE = $(notdir $(CURDIR))
 .PHONY: cross all clean dirs gz cclibs binutils gcc0 newlib gcc
 
 cross: dirs gz cclibs binutils gcc0 newlib gcc
-	
+
 TMP		?= $(CWD)/tmp
 SRC		?= $(TMP)/src
 GZ		?= $(HOME)/gz
@@ -34,6 +37,10 @@ SYSROOT	?= $(CROSS)/sysroot
 dirs:
 	mkdir -p $(TMP) $(SRC) $(GZ) $(CROSS) $(SYSROOT)
 
+.PHONY: clean
+clean:
+	rm -rf $(CROSS)
+	
 BINUTILS	= binutils-$(BINUTILS_VER)
 GCC			= gcc-$(GCC_VER)
 GMP			= gmp-$(GMP_VER)
@@ -136,7 +143,7 @@ CFG_WITHCCLIBS = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS) \
 CFG_BINUTILS = --target=$(TARGET) $(CFG_CPU) \
 	--with-sysroot=$(SYSROOT) --with-native-system-header-dir=/include \
 	--enable-lto --disable-multilib \
-	$(CFG_WITHCCLIBS)
+	$(CFG_WITHCCLIBS) --disable-isl-version-check
 
 binutils: $(CROSS)/bin/$(TARGET)-ld
 $(CROSS)/bin/$(TARGET)-ld: $(SRC)/$(BINUTILS)/README
@@ -148,12 +155,12 @@ CFG_GCC = $(CFG_BINUTILS) --with-newlib --enable-languages="c"
 gcc0: $(SRC)/$(GCC)/README
 	rm -rf $(TMP)/$(GCC) ; mkdir $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ; \
 	$(SRC)/$(GCC)/$(CFG) $(CFG_GCC)
-	cd $(TMP)/$(GCC) ; make -j2 all-host ; make install-host
-	
+	cd $(TMP)/$(GCC) ; $(MAKE) -j2 all-host   ; $(MAKE) install-host
+
 gcc: $(CROSS)/$(TARGET)/lib/libc.a
-	cd $(TMP)/$(GCC) ; make -j2 all-target ; make install-target
+	cd $(TMP)/$(GCC) ; $(MAKE) -j2 all-target ; $(MAKE) install-target
 	
-CFG_NEWLIB = --prefix=$(CROSS) --target=$(TARGET) $(CFG_CPU) \
+CFG_NEWLIB = $(CFG_BINUTILS) --prefix=$(SYSROOT) \
 				--disable-newlib-supplied-syscalls \
 				--infodir=$(CROSS)/share/info
 
@@ -163,11 +170,12 @@ CFG_NEWLIB = --prefix=$(CROSS) --target=$(TARGET) $(CFG_CPU) \
 #--enable-lite-exit --enable-newlib-global-atexit 
 #--enable-newlib-nano-formatted-io
 	
-newlib: $(CROSS)/$(TARGET)/lib/libc.a
-$(CROSS)/$(TARGET)/lib/libc.a: $(SRC)/$(NEWLIB)/README
+newlib: $(SYSROOT)/lib/libc.a
+$(SYSROOT)/lib/libc.a: $(SRC)/$(NEWLIB)/README
 	rm -rf $(TMP)/$(NEWLIB) ; mkdir $(TMP)/$(NEWLIB) ; cd $(TMP)/$(NEWLIB) ; \
 	$(XPATH) $(SRC)/$(NEWLIB)/$(CFG) $(CFG_NEWLIB) && \
 	$(MAKEJ) && $(MAKE) install
+	mv $(SYSROOT)/$(TARGET)/* $(SYSROOT)/ ; rmdir $(SYSROOT)/$(TARGET)
 	
 $(SRC)/$(NEWLIB)/README:
 	cd $(SRC) ; git clone --depth=1 https://github.com/iperry/$(NEWLIB).git
