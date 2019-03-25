@@ -1,3 +1,4 @@
 tmp/
 arm-none-eabi/
 msp430-elf/
+STM32CubeMX/
