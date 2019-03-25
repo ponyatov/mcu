@@ -1,0 +1,6 @@
+*.c
+*.h
+
+.mxproject
+Makefile
+build/
